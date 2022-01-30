@@ -12,23 +12,6 @@ import matplotlib.pyplot as plt
 
 from torchvision import transforms
 
-# torch.manual_seed(1)    # reproducible
-
-# Preprocessing Parameters
-Random_Crop_Ratio = 1
-Random_Rotation_Angle = 0
-
-Image_Size = 28  # TBD
-Image_Height = 1
-
-# Hyper Parameters
-EPOCH = 10  # train the training data n times, to save time, we just train 1 epoch
-BATCH_SIZE = 50
-LR = 0.001  # learning rate
-Dropout_Universal = 0
-DOWNLOAD_MNIST = False
-TEST_SIZE = 2000
-
 labels_map = {
     0: "T-Shirt",
     1: "Trouser",
@@ -42,55 +25,15 @@ labels_map = {
     9: "Ankle Boot",
 }
 
-
-# Mnist digits dataset
-if not (os.path.exists("./Fasion_mnist/")) or not os.listdir("./Fasion_mnist/"):
-    # not mnist dir or mnist is empyt dir
-    DOWNLOAD_MNIST = True
-
-augmentation_transform = transforms.Compose(
+def augmentation_transform(image_size, random_crop_ratio,random_rotation_angle):
+    return  transforms.Compose(
     [
         transforms.ToTensor(),
-        transforms.RandomCrop(int(Image_Size * Random_Crop_Ratio)),
-        transforms.Resize(Image_Size),
-        transforms.RandomRotation(Random_Rotation_Angle),
+        transforms.RandomCrop(int(image_size * random_crop_ratio)),
+        transforms.Resize(image_size),
+        transforms.RandomRotation(random_rotation_angle),
     ]
 )  # Converts a PIL.Image or numpy.ndarray to torch.FloatTensor of shape (C x H x W) and normalize in the range [0.0, 1.0]
-
-train_data = torchvision.datasets.FashionMNIST(
-    root="./Fasion_mnist/",
-    train=True,  # this is training data
-    # transform=torchvision.transforms.ToTensor(),
-    transform=augmentation_transform,
-    download=DOWNLOAD_MNIST,
-)
-
-
-print("Show train dataset size for data and label")
-print(train_data.train_data.size())  # (60000, 28, 28)
-print(train_data.train_labels.size())  # (60000)
-
-# plot one example of transformed, and one untransfored
-
-# index = 20
-# plt.imshow(train_data[index][0].numpy().reshape(28,28), cmap='gray')
-# plt.title('%s' % labels_map[train_data.train_labels[0].item()])
-# plt.show()
-
-# plt.imshow(train_data.train_data[index,:,:].numpy().reshape(28,28), cmap='gray')
-# plt.title('%s' % labels_map[train_data.train_labels[0].item()])
-# plt.show()
-
-# Data Loader for easy mini-batch return in training, the image batch shape will be (50, 1, 28, 28)
-
-
-# pick a number of samples to speed up testing
-test_data = torchvision.datasets.FashionMNIST(root="./Fasion_mnist/", train=False)
-test_x = (
-    torch.unsqueeze(test_data.test_data, dim=1).type(torch.FloatTensor)[:TEST_SIZE]
-    / 255.0
-)  # shape from (2000, 28, 28) to (2000, 1, 28, 28), value in range(0,1)
-test_y = test_data.test_labels[:TEST_SIZE]
 
 class Dataset_customize(Data.Dataset):
     def __init__(self, data, labels, transform=None, train=True):
@@ -116,7 +59,7 @@ class Dataset_customize(Data.Dataset):
         return x,y
 
 class CNN(nn.Module):
-    def __init__(self, image_height=Image_Height, dropout_rate=Dropout_Universal):
+    def __init__(self, image_height=1, image_size=28, dropout_rate=0):
         super(CNN, self).__init__()
         self.conv1 = nn.Sequential(  # input shape (1, 28, 28)
             nn.Conv2d(
@@ -162,7 +105,7 @@ class Model:
         self.train_loader = train_loader
         self.CNN = CNN
         self.optimizer = torch.optim.Adam(
-            cnn.parameters(), lr=lr
+            self.CNN.parameters(), lr=lr
         )  # optimize all cnn parameters
         self.loss_func = nn.CrossEntropyLoss()
 
@@ -172,14 +115,15 @@ class Model:
             for step, (b_x, b_y) in enumerate(
                 self.train_loader
             ):  # gives batch data, normalize x when iterate train_loader
-                output = cnn(b_x)[0]  # cnn output
+                output = self.CNN(b_x)[0]  # cnn output
                 loss = self.loss_func(output, b_y)  # cross entropy loss
                 self.optimizer.zero_grad()  # clear gradients for this training step
                 loss.backward()  # backpropagation, compute gradients
                 self.optimizer.step()  # apply gradients
 
                 if step % 500 == 0:
-                    test_output, last_layer = cnn(self.test_x)
+                    self.CNN.eval()
+                    test_output, last_layer = self.CNN(self.test_x)
                     pred_y = torch.max(test_output, 1)[1].data.numpy()
                     accuracy = float(
                         (pred_y == self.test_y.data.numpy()).astype(int).sum()
@@ -190,6 +134,7 @@ class Model:
                         "| train loss: %.4f" % loss.data.numpy(),
                         "| test accuracy: %.2f" % accuracy,
                     )
+                    self.CNN.train(True)
                 #     if HAS_SK:
                 #         # Visualization of trained flatten layer (T-SNE)
                 #         tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
@@ -197,56 +142,38 @@ class Model:
                 #         low_dim_embs = tsne.fit_transform(last_layer.data.numpy()[:plot_only, :])
                 #         labels = test_y.numpy()[:plot_only]
                 # plot_with_labels(low_dim_embs, labels)
+        self.CNN.train(True)
         return self.CNN
 
 
-cnn = CNN()
-print(cnn)  # net architecture
-
-train_loader = Data.DataLoader(dataset=train_data, batch_size=BATCH_SIZE, shuffle=True)
-
-
-# following function (plot_with_labels) is for visualization, can be ignored if not interested
-# from matplotlib import cm
-# try: from sklearn.manifold import TSNE; HAS_SK = True
-# except: HAS_SK = False; print('Please install sklearn for layer visualization')
-# def plot_with_labels(lowDWeights, labels):
-#     plt.cla()
-#     X, Y = lowDWeights[:, 0], lowDWeights[:, 1]
-#     for x, y, s in zip(X, Y, labels):
-#         c = cm.rainbow(int(255 * s / 9)); plt.text(x, y, s, backgroundcolor=c, fontsize=9)
-#     plt.xlim(X.min(), X.max()); plt.ylim(Y.min(), Y.max()); plt.title('Visualize last layer'); plt.show(); plt.pause(0.01)
-
-# plt.ion()
+def get_FashionMNIST_data(root="./Fasion_mnist/",augmentation=None,download_MNIST=False):
+    if not (os.path.exists(root)) or not os.listdir(root):
+    # not mnist dir or mnist is empyt dir
+        download_MNIST = True
+    train_data = torchvision.datasets.FashionMNIST(
+        root=root,
+        train=True,  # this is training data
+        # transform=torchvision.transforms.ToTensor(),
+        transform=augmentation,
+        download=download_MNIST,
+    )
+    test_data = torchvision.datasets.FashionMNIST(root=root, train=False)
+    return train_data, test_data
 
 
-model = Model(train_loader, test_data, CNN, lr=LR,test_size=TEST_SIZE)
+def print_image_sample(train_dataset, index=0):
+    # plot one example of transformed, and one untransfored
+    index = 20
+    plt.imshow(train_dataset[index][0].numpy().reshape(28,28), cmap='gray')
+    plt.title('%s' % labels_map[train_dataset.train_labels[0].item()])
+    plt.show()
 
-# CNN_trained = model.train(Epoch=1)
+    plt.imshow(train_dataset.train_data[index,:,:].numpy().reshape(28,28), cmap='gray')
+    plt.title('%s' % labels_map[train_dataset.train_labels[0].item()])
+    plt.show()
 
-# # plt.ioff()
-
-# # print 10 predictions from test data
-# test_output, _ = cnn(test_x[:10])
-# pred_y = torch.max(test_output, 1)[1].data.numpy()
-# print(pred_y, "prediction number")
-# print(test_y[:10].numpy(), "real number")
-
-
-print("Test custom dataset")
-
-np_train_data = train_data.train_data.numpy().astype(np.uint8)
-np_train_labels = train_data.train_labels.numpy().astype(np.uint8)
-
-np_test_data = test_data.test_data.numpy().astype(np.uint8)
-np_test_labels = test_data.test_labels.numpy().astype(np.uint8)
-
-my_dataset = Dataset_customize(np_train_data, np_train_labels, transform=augmentation_transform, train=True)
-
-my_test_data = Dataset_customize(np_test_data, np_test_labels, transform=augmentation_transform, train=False)
-
-cnn = CNN()
-train_loader = Data.DataLoader(dataset=my_dataset, batch_size=BATCH_SIZE, shuffle=True)
-New_model = Model(train_loader, my_test_data, CNN, lr=LR,test_size=TEST_SIZE)
-
-CNN_trained = New_model.train(Epoch=10)
+def print_image_shape(train_dataset):
+    print("Show train dataset size for data untransformed, data trasnformed, and label")
+    print(train_dataset.train_data.size())  # (60000, 28, 28)
+    print(train_dataset.train_labels.size())  # (60000)
+    print(train_dataset[0][0].size()) # (60000, 28, 28)

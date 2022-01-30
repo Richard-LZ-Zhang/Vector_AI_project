@@ -1,0 +1,2 @@
+if not 255, height 1
+dataset input not numpy or tensor
