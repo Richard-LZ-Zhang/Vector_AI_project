@@ -6,7 +6,7 @@ import uuid
 import time
 import os
 
-service_ip = "127.0.0.1:2186" # "127.0.0.1:9092" # "172.24.217.34:9092"
+service_ip = "127.0.0.1:9092" # "127.0.0.1:9092" # "172.24.217.34:9092"
 client = KafkaClient(hosts=service_ip)
 
 print(client.topics)

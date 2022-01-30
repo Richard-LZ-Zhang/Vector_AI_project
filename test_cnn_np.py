@@ -33,6 +33,11 @@ Image_Height = 1
 augmentation=augmentation_transform(Image_Size, Random_Crop_Ratio, Random_Rotation_Angle)
 train_data, test_data =  get_FashionMNIST_data(root='./Fasion_mnist/',augmentation=augmentation)
 
+print_image_shape(train_data)
+
+# plot one example of transformed, and one untransfored
+print_image_sample(train_data, index=10) # note that train_data is needed, not test_data
+
 print("Test custom dataset")
 
 np_train_data = train_data.train_data.numpy().astype(np.uint8)
