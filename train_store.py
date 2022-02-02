@@ -12,8 +12,8 @@ import torchvision
 import matplotlib.pyplot as plt
 
 # user library
-from cnn import labels_map, augmentation_transform, Dataset_customize, CNN, Model
-from cnn import print_image_sample, print_image_shape, get_FashionMNIST_data
+from ml.cnn import labels_map, augmentation_transform, Dataset_customize, CNN, Model
+from ml.cnn import print_image_sample, print_image_shape, get_FashionMNIST_data
 
 # Preprocessing Parameters
 Random_Crop_Ratio = 1
@@ -30,14 +30,19 @@ TEST_SIZE = 2000
 Image_Size = 28  # TBD
 Image_Height = 1
 
+Fasion_minist_dir = "./ml/Fasion_mnist/"
+model_dir = "./ml/trained_model/CNN_model1.pt"
+
 augmentation=augmentation_transform(Image_Size, Random_Crop_Ratio, Random_Rotation_Angle)
-train_data, test_data =  get_FashionMNIST_data(root='./Fasion_mnist/',augmentation=augmentation)
+train_data, test_data =  get_FashionMNIST_data(root=Fasion_minist_dir,augmentation=augmentation)
 
 
 # print_image_shape(train_data)
 
 # # plot one example of transformed, and one untransfored
+
 print_image_sample(train_data, index=30) # note that train_data is needed, not test_data
+
 
 cnn = CNN(Image_Height, Image_Size, Dropout_Universal)
 print(cnn)  # net architecture
@@ -62,6 +67,6 @@ pred_y = torch.max(test_output, 1)[1].data.numpy()
 print(pred_y, "prediction number")
 print(test_y[:10].numpy(), "real number")
 
-save_root = "./trained_model/CNN_model1.pt"
+save_root = model_dir
 torch.save(CNN_trained.state_dict(), save_root)
 print("Saving Model to: "+save_root)
