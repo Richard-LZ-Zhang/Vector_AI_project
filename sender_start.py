@@ -30,13 +30,18 @@ Fasion_minist_dir = "./ml/Fasion_mnist/"
 model_dir = "./ml/trained_model/CNN_model1.pt"
 
 train_data, test_data = get_FashionMNIST_data(root=Fasion_minist_dir)
-index = random.randrange(1, 5000, 1) # a random integer from 1 - 5000
-sample_label = test_data.test_labels[index].item()
-print("Sending image in MNIST dataset with label " + str(sample_label))
-sample = torch.unsqueeze(test_data.test_data, dim=1).type(torch.FloatTensor)[index]
-# shape from (2000, 28, 28) to (2000, 1, 28, 28), and then pick the image with the index
-sample = np.array(sample.numpy().flatten(),dtype=np.uint8).tobytes()
-# then convert to numpy and flatten and convert to uint8, and to bytes
+
+#build a list of samples
+samples = []
+for i in range(100):
+    index = random.randrange(1, 5000, 1) # a random integer from 1 - 5000
+    sample_label = test_data.test_labels[index].item()
+    print("Sending image in MNIST dataset with label " + str(sample_label))
+    sample = torch.unsqueeze(test_data.test_data, dim=1).type(torch.FloatTensor)[index]
+    # shape from (2000, 28, 28) to (2000, 1, 28, 28), and then pick the image with the index
+    sample = np.array(sample.numpy().flatten(),dtype=np.uint8).tobytes()
+    # then convert to numpy and flatten and convert to uint8, and to bytes
+    samples.append(sample)
 
 sender_kafka = Sender_Kafka(
     service_ip=kafka_service_ip,
@@ -45,4 +50,4 @@ sender_kafka = Sender_Kafka(
     image_size=Image_Size,
     image_height=Image_Height,
 )
-sender_kafka.start([sample])
+sender_kafka.start(samples)

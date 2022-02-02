@@ -13,18 +13,24 @@ import time
 import os
 
 from ml.cnn import CNN, get_FashionMNIST_data
-from dataset_api.cnn_server import CNN_Server_Kafka
+from dataset_api.cnn_server import CNN_Server_Kafka, CNN_Server_Gcloud
 
 model_path = "ml/trained_model/CNN_model1.pt"
 
 Image_Size = 28  # TBD
 Image_Height = 1
 
+# Kafka parameters
 kafka_service_ip = "127.0.0.1:9092"  # "127.0.0.1:9092" # "172.24.217.34:9092"
 kafka_raw_data_topic_name = b"vector_raw_data"
 kafka_processed_data_topic_name = b"vector_processed_data"
 kafka_raw_data_dev_topic_name = b"vector_raw_data_dev"
 kafka_processed_data_dev_topic_name = b"vector_processed_data_dev"
+
+# Google cloud paramters
+auth_key_path = 'gcloud_key/vector-project-340115-f602c5538842.json'
+project_id = "vector-project-340115"
+gcloud_raw_data_topic_name, gcloud_processed_data_topic_name = "vector-raw-data","vector-processed-data"
 
 model = CNN(Image_Height, Image_Size)
 model.load_state_dict(torch.load(model_path))
@@ -42,12 +48,15 @@ model.eval()
 # print(prediction, "prediction number")
 # print(sample_label.numpy(), "real number")
 
-cnn_server_kafka = CNN_Server_kafka(
-    service_ip=kafka_service_ip,
-    raw_data_topic_name=kafka_raw_data_topic_name,
-    processed_data_topic_name=kafka_processed_data_topic_name,
-    model=model,
-    image_size=Image_Size,
-    image_height=Image_Height,
-)
-cnn_server_kafka.start()
+cnn_server_gcloud = CNN_Server_Gcloud(project_id, gcloud_raw_data_topic_name, gcloud_processed_data_topic_name, auth_key_path)
+
+cnn_server_gcloud.start()
+# cnn_server_kafka = CNN_Server_Kafka(
+#     service_ip=kafka_service_ip,
+#     raw_data_topic_name=kafka_raw_data_topic_name,
+#     processed_data_topic_name=kafka_processed_data_topic_name,
+#     model=model,
+#     image_size=Image_Size,
+#     image_height=Image_Height,
+# )
+# cnn_server_kafka.start()

@@ -19,6 +19,8 @@ import os
 
 class Receiver_Kafka:
     def __init__(self, service_ip="127.0.0.1:9092", raw_data_topic_name = b"vector_raw_data", processed_data_topic_name = b"vector_processed_data", image_size=28, image_height=1):
+        self.client =KafkaClient(hosts=service_ip)
+        print(self.client.topics)
         self.service_ip = service_ip
         self.raw_data_topic_name = raw_data_topic_name
         self.processed_data_topic_name = processed_data_topic_name
@@ -26,10 +28,8 @@ class Receiver_Kafka:
         self.image_height = image_height
 
     def start(self, consumer_group="processed_data_listenner"):
-        client = KafkaClient(hosts=self.service_ip)
-        print(client.topics)
-        topic_raw = client.topics[self.raw_data_topic_name]
-        topic_processed = client.topics[self.processed_data_topic_name]
+        topic_raw = self.client.topics[self.raw_data_topic_name]
+        topic_processed = self.client.topics[self.processed_data_topic_name]
 
         consumer = topic_processed.get_simple_consumer(
             consumer_group=consumer_group,

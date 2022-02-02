@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "vector-project-340115",
+  "private_key_id": "f602c5538842667639aba2659d8a74f79a0013e7",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDpj2zkVnTvzWeh\n4VdwkgVbszcLg2EwIYK9Q+LHNZ7v8a3KfLC3fa3JUZfSc6Vv1wTvmibD4hgsXEZk\nVsV1hW/WzipN//Dm1eGr8d7plpu/FshF+QPzudHK+IAAbGkvGuxf4JE1prpq2Jbv\nzwo2AUgWRB+Zn7ONhVM1mj5pGKT2K605bdqYGwy9344pGT08Y8RhU6ZFX4tkqz25\nM0flZolIg5jdoQKE3DbAhRSyHM0rxAVlLKOoXaetJTdmw9fROiUZdXRMt7QZoHjb\nHj/fp8lzPZXYrOlDO0s7nX4p3gdHSmzyyRaRJjM78MH3OiQ6AFGZqfNa4qVKF6ax\nmophnPSLAgMBAAECggEAPG0Ge6bglyAZ1ThjMnUc3MYnkht5/AVXeVcEZ4y4Y5Sv\n5WjQIZDq8uBguqp/3UkQdlr394rZvTRcY95NNOQCdN0e9dInRdmFCsLHbMCx58Th\nqLTNsHNdUzlqiHGD3xOEnyOO/gX2SeliV4XFuwYm29fhIxI91nntdrtCtVcSaruQ\nffU4s0lXsxULa9g6LnhocFWNZtODPYLtCg8AQQ4oLwJfr1SQ9nBIWrB/+vR+tvcu\nTibfhauFq/R456ZS3eoWX1MuabVcLABiut1aKPdOf3YtNKDgS04LOKv6dbDFRxKY\nSoZWco95m9ukkefgTuGMpO/foXKekR37Oqn+hTJs6QKBgQD8K8TER1NDO91fTbkS\ndmCjxWPK23vTcBP8w4g/3yJwkb4vi1x0C60fx+iBW0GF4x9O/J7erTA1sjDZlGhT\n1Vw5WUYp7IC81YEuQrS/vb32vmXIfdtdgf76C5bTej8yz4mD2uYXNP+8hoIgBYve\nyxnlG6WWhbcRfcZVjI9CKYp6WQKBgQDtG1BQZhVioutS91+QELesvaL3Fzo1XKdX\nG/EZGZAiwHiQwVHkOW9d0/4nUaAXIr+F6kDg5bjbswI+deoWyA6+n4LXV9x33F2T\nfIRE/rg5vbP8goS2K7/UtL66i1Xrp1aByeL/d5mnayMPFOvNIhyv1rB5pozg3yEj\n9fEAKrYBgwKBgAEdqHc94Y5wm2AqleERCQhwfSqOohOjcVMzAk1WDW72FiNbuIMC\n8jcryUmZP8b55E+TKpjNp2L1cOXllDiavxe532ecFk2/nBy6StZ2XnrTCNxEQk49\nnwU4O+ifp9vvsyoUM+RyZZdN+RFvNNk9iNXMs4Tg/phjOBd00cV3LZexAoGAKeU1\nn78p8C/RXOuQ2yfZDJDFhtt30Y35k47AXysBKOLRauJ90dHEN9QJiHEH1I6zQLpP\nlG2C6G8M6nRzVGstD8mnmN1Re2xYrILH7FkFvE4ky21UfcvlLXRybwvHtsfupShD\nD9jWMZrgqv2LXMe2Qeuxaw1evy0t8ei3GMxzNHkCgYEAvjjQj1hk0wxAaXmO4Jbj\nCtk7LU3mOVqr4FJGB7LpUyLPgvEKhOEfAlRxURKXMQRSe5QHfo3zYAHJ0gOluquI\nTNFf79NFcIstQn6xkyG4F5vbmR+wR3wdZzfKoWDe3I9J4jzjc65ROrGGv9RIObI6\nc96jskKtHVyPIKxB14d6qJ4=\n-----END PRIVATE KEY-----\n",
+  "client_email": "mywindows@vector-project-340115.iam.gserviceaccount.com",
+  "client_id": "104202739059674276067",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/mywindows%40vector-project-340115.iam.gserviceaccount.com"
+}
