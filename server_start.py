@@ -26,11 +26,12 @@ kafka_raw_data_topic_name = b"vector_raw_data"
 kafka_processed_data_topic_name = b"vector_processed_data"
 kafka_raw_data_dev_topic_name = b"vector_raw_data_dev"
 kafka_processed_data_dev_topic_name = b"vector_processed_data_dev"
+gcloud_raw_data_topic_id, gcloud_processed_data_topic_id = "vector-raw-data","vector-processed-data"
 
 # Google cloud paramters
-auth_key_path = 'gcloud_key/vector-project-340115-f602c5538842.json'
+auth_key_path = 'gcloud_key/key.json'
 project_id = "vector-project-340115"
-gcloud_raw_data_topic_name, gcloud_processed_data_topic_name = "vector-raw-data","vector-processed-data"
+gcloud_cnn_server_sub_id = "cnn_server"
 
 model = CNN(Image_Height, Image_Size)
 model.load_state_dict(torch.load(model_path))
@@ -48,9 +49,9 @@ model.eval()
 # print(prediction, "prediction number")
 # print(sample_label.numpy(), "real number")
 
-cnn_server_gcloud = CNN_Server_Gcloud(project_id, gcloud_raw_data_topic_name, gcloud_processed_data_topic_name, auth_key_path)
+cnn_server_gcloud = CNN_Server_Gcloud(project_id,gcloud_cnn_server_sub_id, gcloud_processed_data_topic_id, auth_key_path, model, Image_Height, Image_Size)
 
-cnn_server_gcloud.start()
+cnn_server_gcloud.start(time_out=100)
 # cnn_server_kafka = CNN_Server_Kafka(
 #     service_ip=kafka_service_ip,
 #     raw_data_topic_name=kafka_raw_data_topic_name,
