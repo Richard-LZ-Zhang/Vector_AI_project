@@ -162,14 +162,13 @@ def get_FashionMNIST_data(root="./Fasion_mnist/",augmentation=None,download_MNIS
 
 
 def print_image_sample(train_dataset, index=0):
-    # plot one example of transformed, and one untransfored
-    index = 20
+    # plot one example of transformed, and one untransforeD
     plt.imshow(train_dataset[index][0].numpy().reshape(28,28), cmap='gray')
-    plt.title('%s' % labels_map[train_dataset.train_labels[0].item()])
+    plt.title('%s' % labels_map[train_dataset.train_labels[index].item()])
     plt.show()
 
     plt.imshow(train_dataset.train_data[index,:,:].numpy().reshape(28,28), cmap='gray')
-    plt.title('%s' % labels_map[train_dataset.train_labels[0].item()])
+    plt.title('%s' % labels_map[train_dataset.train_labels[index].item()])
     plt.show()
 
 def print_image_shape(train_dataset):

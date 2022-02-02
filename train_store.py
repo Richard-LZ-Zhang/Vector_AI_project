@@ -37,7 +37,7 @@ train_data, test_data =  get_FashionMNIST_data(root='./Fasion_mnist/',augmentati
 # print_image_shape(train_data)
 
 # # plot one example of transformed, and one untransfored
-# print_image_sample(train_data, index=10) # note that train_data is needed, not test_data
+print_image_sample(train_data, index=30) # note that train_data is needed, not test_data
 
 cnn = CNN(Image_Height, Image_Size, Dropout_Universal)
 print(cnn)  # net architecture
