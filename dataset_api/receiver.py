@@ -92,14 +92,14 @@ class Receiver_Kafka:
         self.image_size = image_size
         self.image_height = image_height
 
-    def start(self, consumer_group="processed_data_listenner"):
+    def start(self, consumer_group="processed_data_listener", reset_offset_on_start=False, auto_offset_reset=OffsetType.LATEST):
         topic_raw = self.client.topics[self.raw_data_topic_name]
         topic_processed = self.client.topics[self.processed_data_topic_name]
 
         consumer = topic_processed.get_simple_consumer(
             consumer_group=consumer_group,
-            auto_offset_reset=OffsetType.EARLIEST,
-            reset_offset_on_start=False,
+            auto_offset_reset=auto_offset_reset,
+            reset_offset_on_start=reset_offset_on_start,
             auto_commit_enable=True,
             auto_commit_interval_ms=1000
         )

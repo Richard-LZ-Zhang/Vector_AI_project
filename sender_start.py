@@ -48,7 +48,8 @@ for i in range(image_num):
     # then convert to numpy and flatten and convert to uint8, and to bytes
     samples.append(sample)
 
-sender = Sender("gcloud", "service_config/gcloud_config.json")
+# sender = Sender("gcloud", "service_config/gcloud_config.json")
+sender = Sender("kafka", "service_config/kafka_config.json")
 sender.service.start(samples)
 sender.service.hold()
 

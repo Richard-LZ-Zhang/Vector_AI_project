@@ -9,8 +9,8 @@ from google.cloud.pubsub import types
 
 class Sender:
     def __init__(self, cloud_name, config_file_path):
+        config = json.load(open(config_file_path))
         if cloud_name == "gcloud":
-            config = json.load(open(config_file_path))
             project_id = config["project_id"]
             auth_key_path = config["auth_key_path"]
             receiver_sub_id = config["gcloud_receiver_sub_id"]
@@ -19,7 +19,14 @@ class Sender:
             gcloud_processed_data_topic_id = config["gcloud_processed_data_topic_id"]
             self.service = Sender_Gcloud(project_id, gcloud_raw_data_topic_id, auth_key_path)
         elif cloud_name == "kafka":
-            pass
+            kafka_service_ip = config["kafka_service_ip"]
+            kafka_raw_data_topic_name = config["kafka_raw_data_topic_name"]
+            kafka_processed_data_topic_name = config["kafka_processed_data_topic_name"]
+            kafka_raw_data_dev_topic_name = config["kafka_raw_data_dev_topic_name"]
+            kafka_processed_data_dev_topic_name = config["kafka_processed_data_dev_topic_name"]
+            gcloud_raw_data_topic_id = config["gcloud_raw_data_topic_id"]
+            gcloud_processed_data_topic_id = config["gcloud_processed_data_topic_id"]
+            self.service = Sender_Kafka(kafka_service_ip, kafka_raw_data_topic_name, kafka_processed_data_topic_name)
         else:
             print("Receiver Object corrupted!")
 
@@ -71,21 +78,22 @@ class Sender_Kafka:
         print(self.client.topics)
         self.raw_data_topic_name = raw_data_topic_name
         self.processed_data_topic_name = processed_data_topic_name
-        self.image_size = image_size
-        self.image_height = image_height
+        # self.image_size = image_size
+        # self.image_height = image_height
+        self.producer = None
 
     def start(self, messages):
         topic_raw = self.client.topics[self.raw_data_topic_name]
-        with topic_raw.get_producer(
-            min_queued_messages=1, max_queued_messages=1, delivery_reports=True
-        ) as producer:
-            for message in messages:
-                producer.produce(message)
-                msg, exc = producer.get_delivery_report(block=True)
-                if exc is not None:
-                    print("Failed to deliver msg {}: {}".format(msg.partition_key, repr(exc)))
-                else:
-                    print("Successfully delivered a message")
-
-            print("waiting for all messages to be written")
-            producer._wait_all()
+        self.producer =  topic_raw.get_producer(
+           max_queued_messages=1000, min_queued_messages=10, linger_ms=50,  delivery_reports=True
+        )
+        for message in messages:
+            self.producer.produce(message)
+            msg, exc = self.producerproducer.get_delivery_report(block=True)
+            if exc is not None:
+                print("Failed to deliver msg {}: {}".format(msg.partition_key, repr(exc)))
+            else:
+                print("Successfully delivered a message")
+    def hold(self):
+        print("waiting for all messages to be written")
+        self.producer._wait_all()
