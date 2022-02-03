@@ -15,12 +15,32 @@ from datetime import datetime
 import uuid
 import time
 import os
-import json 
+import json
+import traceback
+
 from google.auth import jwt
 from google.cloud import pubsub_v1
 
+class Receiver:
+    def __init__(self, cloud_name, config_file_path):
+        if cloud_name == "gcloud":
+            config = json.load(open(config_file_path))
+            project_id = config["project_id"]
+            auth_key_path = config["auth_key_path"]
+            receiver_sub_id = config["gcloud_receiver_sub_id"]
+            gcloud_cnn_server_sub_id = config["gcloud_cnn_server_sub_id"]
+            gcloud_raw_data_topic_id = config["gcloud_raw_data_topic_id"]
+            gcloud_processed_data_topic_id = config["gcloud_processed_data_topic_id"]
+            self.service = Receiver_Gcloud(project_id, receiver_sub_id, auth_key_path)
+        elif cloud_name == "kafka":
+            pass
+        else:
+            print("Receiver Object corrupted!")
+
+
+
 class Receiver_Gcloud:
-    def __init__(self,project_id, receiver_sub_id, auth_key_path, timeout=200.0):
+    def __init__(self,project_id, receiver_sub_id, auth_key_path):
         service_account_info = json.load(open(auth_key_path))
         credentials_sub = jwt.Credentials.from_service_account_info(
             service_account_info, audience="https://pubsub.googleapis.com/google.pubsub.v1.Subscriber"
@@ -29,8 +49,9 @@ class Receiver_Gcloud:
         # Create a fully qualified identifier in the form of
         # projects/{project_id}/subscriptions/{subscription_id}
         self.processed_data_sub_path = self.subscriber_client.subscription_path(project_id, receiver_sub_id)
+        self.futures = []
 
-    def start(self, time_out=200):
+    def start(self):
         def callback(message: pubsub_v1.subscriber.message.Message) -> None:
             value = int.from_bytes(message.data, "big")
             print("Receiver Gcloud: received a message from topic processed data. Prediction: {}".format(value))
@@ -40,22 +61,26 @@ class Receiver_Gcloud:
         future = self.subscriber_client.subscribe(
             self.processed_data_sub_path, callback=callback
         )
+        self.futures.append(future)
         print(f"Listening for messages on {self.processed_data_sub_path}..\n")
-        try:
-            # Calling result() on StreamingPullFuture keeps the main thread from
-            # exiting while messages get processed in the callbacks.
-            future.result(timeout=time_out)
-        except KeyboardInterrupt:
-            print("Receiver Gcloud subscriber shutdown by keyboard interruption")
-            future.cancel()  # Trigger the shutdown.
-            future.result()  # Block until the shutdown is complete.
-        except Exception as e:  # noqa
-            print("Receiver Gcloud subscriber shutdown due to Exception: ")
-            print(e)
-            future.cancel()  # Trigger the shutdown.
-            
-            future.result()  # Block until the shutdown is complete.
-        self.subscriber_client.close()
+
+    def hold(self, time_out=200):
+        for future in self.futures:
+            try:
+                # Calling result() on StreamingPullFuture keeps the main thread from
+                # exiting while messages get processed in the callbacks.
+                future.result(timeout=time_out)
+            except Exception as exp:
+                print("Receiver Gcloud subscriber shutdown due to exception.")
+                print(exp)
+                traceback.print_exc()
+                future.cancel()  # Trigger the shutdown.
+                future.result()  # Block until the shutdown is complete.
+    
+    def close_all(self):
+        for future in self.futures:
+            future.cancel()
+        self.hold()
 
 class Receiver_Kafka:
     def __init__(self, service_ip="127.0.0.1:9092", raw_data_topic_name = b"vector_raw_data", processed_data_topic_name = b"vector_processed_data", image_size=28, image_height=1):

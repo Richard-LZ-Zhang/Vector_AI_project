@@ -1,0 +1,7 @@
+{
+  "kafka_service_ip" : "127.0.0.1:9092",
+  "kafka_raw_data_topic_name" : "vector_raw_data",
+  "kafka_processed_data_topic_name" : "vector_processed_data",
+  "kafka_raw_data_dev_topic_name" : "vector_raw_data_dev",
+  "kafka_processed_data_dev_topic_name" : "vector_processed_data_dev"
+}

@@ -12,18 +12,30 @@ import matplotlib.pyplot as plt
 
 import queue
 from datetime import datetime
-import uuid
-import time
-import os
+import traceback
 
 import json
 from google.auth import jwt
 from google.cloud import pubsub_v1
 
-
+class CNN_Server:
+    def __init__(self, cloud_name, config_file_path, model, image_height, image_size):
+        if cloud_name == "gcloud":
+            config = json.load(open(config_file_path))
+            project_id = config["project_id"]
+            auth_key_path = config["auth_key_path"]
+            receiver_sub_id = config["gcloud_receiver_sub_id"]
+            gcloud_cnn_server_sub_id = config["gcloud_cnn_server_sub_id"]
+            gcloud_raw_data_topic_id = config["gcloud_raw_data_topic_id"]
+            gcloud_processed_data_topic_id = config["gcloud_processed_data_topic_id"]
+            self.service = CNN_Server_Gcloud(project_id,gcloud_cnn_server_sub_id, gcloud_processed_data_topic_id, auth_key_path, model, image_height, image_size)
+        elif cloud_name == "kafka":
+            pass
+        else:
+            print("Receiver Object corrupted!")
 
 class CNN_Server_Gcloud:
-    def __init__(self,project_id,cnn_server_sub_id, gcloud_processed_data_topic_id, auth_key_path, model, image_height, image_size, timeout=200.0):
+    def __init__(self,project_id,cnn_server_sub_id, gcloud_processed_data_topic_id, auth_key_path, model, image_height, image_size):
         self.model = model
         self.image_size = image_size
         self.image_height = image_height
@@ -44,6 +56,8 @@ class CNN_Server_Gcloud:
 
         self.publisher_client = pubsub_v1.PublisherClient(credentials=credentials_pub)
         self.processed_data_topic_path = self.publisher_client.topic_path(project_id, gcloud_processed_data_topic_id)
+        self.futures_sub = []
+        self.futures_pub = []
 
     def start(self, time_out=200):
         def callback(message: pubsub_v1.subscriber.message.Message) -> None:
@@ -55,28 +69,36 @@ class CNN_Server_Gcloud:
             prediction_byte = byte_to_prediction_byte(self.model, message.data, self.image_height, self.image_size)
 
             future = self.publisher_client.publish(self.processed_data_topic_path, prediction_byte)
+            self.futures_pub.append(future)
             message_id = future.result()
             print(f"CNN Server: Published a data to Gcloud {self.processed_data_topic_path}: {message_id}")
 
         future = self.subscriber_client.subscribe(
             self.raw_data_sub_path, callback=callback
         )
+        self.futures_sub.append(future)
         print(f"Listening for messages on {self.raw_data_sub_path}..\n")
+        
+    def hold(self,time_out=200):
         try:
             # Calling result() on StreamingPullFuture keeps the main thread from
             # exiting while messages get processed in the callbacks.
-            future.result(timeout=time_out)
-        except KeyboardInterrupt:
-            print("CNN Server Gcloud subscriber shutdown by keyboard interruption")
+            for future in self.futures_pub:
+                future.result(timeout=5) # a small time for publish threads
+            for future in self.futures_sub:
+                future.result(timeout=time_out) # a small time for publish threads    
+        except Exception as exp:  # noqa
+            print("CNN Server Gcloud shutdown due to Exception: ")
+            print(exp)
+            traceback.print_exc()
             future.cancel()  # Trigger the shutdown.
             future.result()  # Block until the shutdown is complete.
-        except Exception as e:  # noqa
-            print("Receiver Gcloud subscriber shutdown due to Exception: ")
-            print(e)
-            future.cancel()  # Trigger the shutdown.
-            
-            future.result()  # Block until the shutdown is complete.
-        self.subscriber_client.close()
+
+    def close_all(self):
+        for future in self.futures_sub:
+            future.cancel()
+        for future in self.futures_pub:
+            future.cancel()
 
         
 

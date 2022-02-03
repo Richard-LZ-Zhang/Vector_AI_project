@@ -1,0 +1,8 @@
+{
+  "project_id": "vector-project-340115",
+  "auth_key_path" : "gcloud_key/key.json",
+  "gcloud_raw_data_topic_id":"vector-raw-data",
+  "gcloud_processed_data_topic_id" : "vector-processed-data",
+  "gcloud_receiver_sub_id" : "receiver",
+  "gcloud_cnn_server_sub_id" : "cnn_server"
+}

@@ -1,25 +1,27 @@
 from pykafka import KafkaClient
-from pykafka.utils.compat import Empty
-from pykafka.common import OffsetType
-
-# ML library
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.utils.data as Data
-import torchvision
-import matplotlib.pyplot as plt
-
-import queue
-from datetime import datetime
-import uuid
-import time
-import os
-import random
 
 import json
+import traceback
+
 from google.auth import jwt
 from google.cloud import pubsub_v1
+from google.cloud.pubsub import types
+
+class Sender:
+    def __init__(self, cloud_name, config_file_path):
+        if cloud_name == "gcloud":
+            config = json.load(open(config_file_path))
+            project_id = config["project_id"]
+            auth_key_path = config["auth_key_path"]
+            receiver_sub_id = config["gcloud_receiver_sub_id"]
+            gcloud_cnn_server_sub_id = config["gcloud_cnn_server_sub_id"]
+            gcloud_raw_data_topic_id = config["gcloud_raw_data_topic_id"]
+            gcloud_processed_data_topic_id = config["gcloud_processed_data_topic_id"]
+            self.service = Sender_Gcloud(project_id, gcloud_raw_data_topic_id, auth_key_path)
+        elif cloud_name == "kafka":
+            pass
+        else:
+            print("Receiver Object corrupted!")
 
 class Sender_Gcloud:
     def __init__(self,project_id, topic_id, auth_key_path):
@@ -28,17 +30,38 @@ class Sender_Gcloud:
         credentials = jwt.Credentials.from_service_account_info(
             service_account_info, audience=audience
         ) 
-        # Initialize a Subscriber client
-        self.publisher = pubsub_v1.PublisherClient(credentials=credentials)
-        # Create a fully qualified identifier in the form of
-        # projects/{project_id}/subscriptions/{subscription_id}
+        # Initialize a publisher client with batch size of max 500
+        self.publisher = pubsub_v1.PublisherClient(batch_settings=types.BatchSettings(max_messages=500),credentials=credentials)
         self.topic_path = self.publisher.topic_path(project_id, topic_id)
-
+        self.futures = []
     def start(self, messages):
-        for message in messages:
-            api_future = self.publisher.publish(self.topic_path, message)
-            message_id = api_future.result()
+        def callback(future):
+            message_id = future.result()
             print(f"Sender: Published a data to Gcloud {self.topic_path}: {message_id}")
+        
+        for message in messages:
+            future = self.publisher.publish(self.topic_path, message)
+            future.add_done_callback(callback)
+            self.futures.append(future)
+
+    def hold(self, time_out=200):
+        print("Waiting for all futures to end.")
+        for future in self.futures:
+            try:
+                # Calling result() on StreamingPullFuture keeps the main thread from
+                # exiting while messages get processed in the callbacks.
+                future.result(timeout=time_out)
+            except Exception as exp:
+                print("Sender Gcloud publisher shutdown due to exception.")
+                print(exp)
+                traceback.print_exc()
+                future.cancel()  # Trigger the shutdown.
+                future.result()  # Block until the shutdown is complete.
+        print("All futures ended.")
+
+    def close_all(self):
+        for future in self.futures:
+            future.cancel()
 
 
 class Sender_Kafka:
