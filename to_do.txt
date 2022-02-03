@@ -1,7 +1,0 @@
-part 1
-if not 255, height 1
-dataset input not numpy or tensor
-
-part 2
-sender sends multilpled each time (batch)
-receiver llimit on max to receive
