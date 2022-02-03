@@ -23,6 +23,8 @@ from dataset_api.cnn_server import CNN_Server_Kafka, CNN_Server_Gcloud, CNN_Serv
 from concurrent.futures import ThreadPoolExecutor
 
 MODE = "gcloud"
+image_num = 200
+
 Image_Size = 28  # TBD
 Image_Height = 1
 
@@ -34,7 +36,6 @@ gcloud_config_path = "service_config/gcloud_config.json"
 
 train_data, test_data = get_FashionMNIST_data(root=Fasion_minist_dir)
 
-image_num = 200
 samples = get_samples(image_num, test_data)
 
 model = CNN(Image_Height, Image_Size)
