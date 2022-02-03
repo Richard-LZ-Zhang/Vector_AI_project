@@ -32,13 +32,19 @@ Image_Height = 1
 
 Fasion_minist_dir = "./ml/Fasion_mnist/"
 
-augmentation=augmentation_transform(Image_Size, Random_Crop_Ratio, Random_Rotation_Angle)
-train_data, test_data =  get_FashionMNIST_data(root=Fasion_minist_dir,augmentation=augmentation)
+augmentation = augmentation_transform(
+    Image_Size, Random_Crop_Ratio, Random_Rotation_Angle
+)
+train_data, test_data = get_FashionMNIST_data(
+    root=Fasion_minist_dir, augmentation=augmentation
+)
 
 print_image_shape(train_data)
 
 # plot one example of transformed, and one untransfored
-print_image_sample(train_data, index=10) # note that train_data is needed, not test_data
+print_image_sample(
+    train_data, index=10
+)  # note that train_data is needed, not test_data
 
 print("Test custom dataset")
 
@@ -48,13 +54,17 @@ np_train_labels = train_data.train_labels.numpy().astype(np.uint8)
 np_test_data = test_data.test_data.numpy().astype(np.uint8)
 np_test_labels = test_data.test_labels.numpy().astype(np.uint8)
 
-my_dataset = Dataset_customize(np_train_data, np_train_labels, transform=augmentation, train=True)
+my_dataset = Dataset_customize(
+    np_train_data, np_train_labels, transform=augmentation, train=True
+)
 
-my_test_data = Dataset_customize(np_test_data, np_test_labels, transform=augmentation, train=False)
+my_test_data = Dataset_customize(
+    np_test_data, np_test_labels, transform=augmentation, train=False
+)
 
 cnn = CNN(Image_Height, Image_Size, Dropout_Universal)
 train_loader = Data.DataLoader(dataset=my_dataset, batch_size=BATCH_SIZE, shuffle=True)
-New_model = Model(train_loader, my_test_data, cnn, lr=LR,test_size=TEST_SIZE)
+New_model = Model(train_loader, my_test_data, cnn, lr=LR, test_size=TEST_SIZE)
 
 CNN_trained = New_model.train(Epoch=1)
 

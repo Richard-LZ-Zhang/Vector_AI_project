@@ -23,8 +23,8 @@ from google.cloud import pubsub_v1
 
 class Receiver:
     def __init__(self, cloud_name, config_file_path):
+        config = json.load(open(config_file_path))
         if cloud_name == "gcloud":
-            config = json.load(open(config_file_path))
             project_id = config["project_id"]
             auth_key_path = config["auth_key_path"]
             receiver_sub_id = config["gcloud_receiver_sub_id"]
@@ -33,7 +33,12 @@ class Receiver:
             gcloud_processed_data_topic_id = config["gcloud_processed_data_topic_id"]
             self.service = Receiver_Gcloud(project_id, receiver_sub_id, auth_key_path)
         elif cloud_name == "kafka":
-            pass
+            kafka_service_ip = config["kafka_service_ip"]
+            kafka_raw_data_topic_name = config["kafka_raw_data_topic_name"]
+            kafka_processed_data_topic_name = config["kafka_processed_data_topic_name"]
+            kafka_raw_data_dev_topic_name = config["kafka_raw_data_dev_topic_name"]
+            kafka_processed_data_dev_topic_name = config["kafka_processed_data_dev_topic_name"]
+            self.service = Receiver_Kafka(kafka_service_ip, kafka_raw_data_topic_name, kafka_processed_data_topic_name)
         else:
             print("Receiver Object corrupted!")
 
@@ -57,12 +62,12 @@ class Receiver_Gcloud:
             print("Receiver Gcloud: received a message from topic processed data. Prediction: {}".format(value))
             # Acknowledge the message. Unack'ed messages will be redelivered.
             message.ack()
-            print(f"Acknowledged {message.message_id}.")
+            print(f"Receiver: Acknowledged {message.message_id}.")
         future = self.subscriber_client.subscribe(
             self.processed_data_sub_path, callback=callback
         )
         self.futures.append(future)
-        print(f"Listening for messages on {self.processed_data_sub_path}..\n")
+        print(f"Receiver: Listening for messages on {self.processed_data_sub_path}..\n")
 
     def hold(self, time_out=200):
         for future in self.futures:
@@ -85,26 +90,35 @@ class Receiver_Gcloud:
 class Receiver_Kafka:
     def __init__(self, service_ip="127.0.0.1:9092", raw_data_topic_name = b"vector_raw_data", processed_data_topic_name = b"vector_processed_data", image_size=28, image_height=1):
         self.client =KafkaClient(hosts=service_ip)
-        print(self.client.topics)
+        # print(self.client.topics)
         self.service_ip = service_ip
         self.raw_data_topic_name = raw_data_topic_name
         self.processed_data_topic_name = processed_data_topic_name
         self.image_size = image_size
         self.image_height = image_height
+        self.consumer = None
 
     def start(self, consumer_group="processed_data_listener", reset_offset_on_start=False, auto_offset_reset=OffsetType.LATEST):
         topic_raw = self.client.topics[self.raw_data_topic_name]
         topic_processed = self.client.topics[self.processed_data_topic_name]
-
-        consumer = topic_processed.get_simple_consumer(
+        print("Receiver starts listening to topic: {}".format(self.processed_data_topic_name))
+        self.consumer = topic_processed.get_simple_consumer(
             consumer_group=consumer_group,
             auto_offset_reset=auto_offset_reset,
             reset_offset_on_start=reset_offset_on_start,
             auto_commit_enable=True,
             auto_commit_interval_ms=1000
         )
-        for message in consumer:
+        # Yield an infinite stream of messages until the consumer times out
+        for message in self.consumer:
             if message is not None:
-                print("Receiver: Message received from topic (" +  self.processed_data_topic_name.decode('UTF-8') + ") with offset: " + str(message.offset))
+                print("Receiver: Message received from topic (" +  self.processed_data_topic_name + ") with offset: " + str(message.offset))
                 value = int.from_bytes(message.value, "big")
                 print("Value: ", value)
+
+    def hold(self):
+        pass 
+
+    def close_all(self):
+        print("Receiver: stop consumer thread.")
+        self.consumer.stop()

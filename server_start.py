@@ -5,11 +5,6 @@ import torch.nn as nn
 import torch.utils.data as Data
 import torchvision
 import matplotlib.pyplot as plt
-
-import queue
-from datetime import datetime
-import uuid
-import time
 import os
 
 from ml.cnn import CNN, get_FashionMNIST_data
@@ -19,14 +14,6 @@ model_path = "ml/trained_model/CNN_model1.pt"
 
 Image_Size = 28  # TBD
 Image_Height = 1
-
-# Kafka parameters
-kafka_service_ip = "127.0.0.1:9092"  # "127.0.0.1:9092" # "172.24.217.34:9092"
-kafka_raw_data_topic_name = b"vector_raw_data"
-kafka_processed_data_topic_name = b"vector_processed_data"
-kafka_raw_data_dev_topic_name = b"vector_raw_data_dev"
-kafka_processed_data_dev_topic_name = b"vector_processed_data_dev"
-gcloud_raw_data_topic_id, gcloud_processed_data_topic_id = "vector-raw-data","vector-processed-data"
 
 model = CNN(Image_Height, Image_Size)
 model.load_state_dict(torch.load(model_path))
@@ -44,9 +31,20 @@ model.eval()
 # print(prediction, "prediction number")
 # print(sample_label.numpy(), "real number")
 
-cnn_server = CNN_Server("gcloud", "service_config/gcloud_config.json", model, Image_Height, Image_Size)
+# cnn_server = CNN_Server("gcloud", "service_config/gcloud_config.json", model, Image_Height, Image_Size)
+cnn_server = CNN_Server(
+    "kafka", "service_config/kafka_config.json", model, Image_Height, Image_Size
+)
 cnn_server.service.start()
 cnn_server.service.hold()
+
+# Kafka parameters
+# kafka_service_ip = "127.0.0.1:9092"  # "127.0.0.1:9092" # "172.24.217.34:9092"
+# kafka_raw_data_topic_name = b"vector_raw_data"
+# kafka_processed_data_topic_name = b"vector_processed_data"
+# kafka_raw_data_dev_topic_name = b"vector_raw_data_dev"
+# kafka_processed_data_dev_topic_name = b"vector_processed_data_dev"
+# gcloud_raw_data_topic_id, gcloud_processed_data_topic_id = "vector-raw-data","vector-processed-data"
 
 # Google cloud paramters
 # auth_key_path = 'gcloud_key/key.json'

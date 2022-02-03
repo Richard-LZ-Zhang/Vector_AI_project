@@ -1,7 +1,7 @@
 # library
 # standard library
 import os
-
+import random
 # third-party library
 import numpy as np
 import torch
@@ -176,3 +176,29 @@ def print_image_shape(train_dataset):
     print(train_dataset.train_data.size())  # (60000, 28, 28)
     print(train_dataset.train_labels.size())  # (60000)
     print(train_dataset[0][0].size()) # (60000, 28, 28)
+
+def get_samples(image_num, test_data):
+    print("Prepared {} MNIST images".format(image_num))
+    # build a list of samples
+    samples = []
+    for i in range(image_num):
+        index = random.randrange(1, 5000, 1)  # a random integer from 1 - 5000
+        sample_label = test_data.test_labels[index].item()
+        # print("Captured an image in MNIST dataset with label " + str(sample_label))
+        sample = torch.unsqueeze(test_data.test_data, dim=1).type(torch.FloatTensor)[index]
+        # shape from (2000, 28, 28) to (2000, 1, 28, 28), and then pick the image with the index
+        sample = np.array(sample.numpy().flatten(), dtype=np.uint8).tobytes()
+        # then convert to numpy and flatten and convert to uint8, and to bytes
+        samples.append(sample)
+    return samples
+
+def test_accuracy(test_data, model, test_num=5000):
+    test_x = torch.unsqueeze(test_data.test_data, dim=1).type(torch.FloatTensor)[:test_num] / 255.0
+    test_y = test_data.test_labels[:test_num]
+    test_output, _ = model(test_x)
+    pred_y = torch.max(test_output, 1)[1].data.numpy()
+    accuracy = float(
+        (pred_y == test_y.data.numpy()).astype(int).sum()
+    ) / float(test_y.size(0))
+    print("test accuracy: %.3f" % accuracy)
+    return accuracy
