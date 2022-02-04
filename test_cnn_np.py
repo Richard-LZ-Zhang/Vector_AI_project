@@ -1,3 +1,4 @@
+""" This code tests custom data_set fed by numpy array data, uint8."""
 # library
 # standard library
 import os
@@ -17,7 +18,7 @@ from ml.cnn import print_image_sample, print_image_shape, get_FashionMNIST_data
 
 # Preprocessing Parameters
 Random_Crop_Ratio = 1
-Random_Rotation_Angle = 0
+Random_Rotation_Angle = 10
 
 # Hyper Parameters
 EPOCH = 1  # train the training data n times, to save time, we just train 1 epoch
@@ -39,32 +40,40 @@ train_data, test_data = get_FashionMNIST_data(
     root=Fasion_minist_dir, augmentation=augmentation
 )
 
-print_image_shape(train_data)
-
-# plot one example of transformed, and one untransfored
-print_image_sample(
-    train_data, index=10
-)  # note that train_data is needed, not test_data
+print("Max element for original train_data, test_data")
+print(torch.max(train_data.train_data).item(), torch.max(test_data.test_data).item())
 
 print("Test custom dataset")
 
 np_train_data = train_data.train_data.numpy().astype(np.uint8)
 np_train_labels = train_data.train_labels.numpy().astype(np.uint8)
 
+
 np_test_data = test_data.test_data.numpy().astype(np.uint8)
 np_test_labels = test_data.test_labels.numpy().astype(np.uint8)
 
-my_dataset = Dataset_customize(
+np_train_dataset = Dataset_customize(
     np_train_data, np_train_labels, transform=augmentation, train=True
 )
+# np_train_dataset object accepts np array uint 8 as an input
 
-my_test_data = Dataset_customize(
+np_test_dataset = Dataset_customize(
     np_test_data, np_test_labels, transform=augmentation, train=False
 )
 
+print_image_shape(train_data) # plot one example of transformed, and one untransfored
+print_image_sample(
+    np_train_dataset, index=10
+)  # note 
+
+
+print("Max element for np train_data, test_data")
+print(torch.max(np_train_dataset.train_data).item(), torch.max(np_test_dataset.test_data).item())
+
+
 cnn = CNN(Image_Height, Image_Size, Dropout_Universal)
-train_loader = Data.DataLoader(dataset=my_dataset, batch_size=BATCH_SIZE, shuffle=True)
-New_model = Model(train_loader, my_test_data, cnn, lr=LR, test_size=TEST_SIZE)
+train_loader = Data.DataLoader(dataset=np_train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+New_model = Model(train_loader, np_test_dataset, cnn, lr=LR, test_size=TEST_SIZE)
 
 CNN_trained = New_model.train(Epoch=1)
 

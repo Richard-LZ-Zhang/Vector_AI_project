@@ -26,6 +26,7 @@ labels_map = {
 }
 
 def augmentation_transform(image_size, random_crop_ratio,random_rotation_angle):
+    """ transformation used for data augmentation (random crop + random rotation). Fed into dataset objects."""
     return  transforms.Compose(
     [
         transforms.ToTensor(),
@@ -36,17 +37,25 @@ def augmentation_transform(image_size, random_crop_ratio,random_rotation_angle):
 )  # Converts a PIL.Image or numpy.ndarray to torch.FloatTensor of shape (C x H x W) and normalize in the range [0.0, 1.0]
 
 class Dataset_customize(Data.Dataset):
+    ''' Inherit from torch dataset, to allow Customized Dataset objects be fed into Model Object below.
+    Input: 
+    data: in numpy array uint 8, shape (num_images, height, size, size). Range 0 - 255.  
+    laels: in numpy array shape (num_images, labels)
+    transform: torchvision.transform object
+    train: True or False
+    '''
     def __init__(self, data, labels, transform=None, train=True):
         super(Dataset_customize,self).__init__()
         self.data = data
         self.len = self.data.shape[0]
         self.labels = labels
         self.transform = transform
+        # self.test_data, test_labels, train_data, train_labels should be tensor form of original data (untransfored)
         if train == False:
-            self.test_data = torch.tensor(data)
+            self.test_data = torch.tensor(data) # Note this is untransformed and should take range 0 - 255
             self.test_labels = torch.tensor(labels)
         else:
-            self.train_data = torch.tensor(data)
+            self.train_data = torch.tensor(data) # Note this is untransformed and should take range 0 - 255
             self.train_labels = torch.tensor(labels)
     def __len__(self):
         return self.len
@@ -56,10 +65,12 @@ class Dataset_customize(Data.Dataset):
         y = self.labels[idx]
         if self.transform:
             x = self.transform(x)
+        # This result should be normalized (0 - 255 to 0 - 1)
         return x,y
 
 class CNN(nn.Module):
     def __init__(self, image_height=1, image_size=28, dropout_rate=0):
+        """ Core CNN tensor layers object. Note now only supports input size 28"""
         super(CNN, self).__init__()
         self.conv1 = nn.Sequential(  # input shape (1, 28, 28)
             nn.Conv2d(
@@ -95,6 +106,11 @@ class CNN(nn.Module):
 
 class Model:
     def __init__(self, train_loader, test_data, CNN, lr=0.001, test_size=2000):
+        ''' Model object for the training.
+        Input: 
+        train_loader: Data.DataLoader object with train data loaded (as a dataset object) and batch size specified
+        test_data: a dataset object (either Dataset_customize or torch dataset object
+        CNN: CNN object'''
         self.test_x = (
             torch.unsqueeze(test_data.test_data, dim=1).type(torch.FloatTensor)[
                 :test_size
@@ -147,6 +163,7 @@ class Model:
 
 
 def get_FashionMNIST_data(root="./Fasion_mnist/",augmentation=None,download_MNIST=False):
+    """ get FashionMNIST_Data in for dataset object from root dir. Augmentation takes a tranforms object. return two datasets"""
     if not (os.path.exists(root)) or not os.listdir(root):
     # not mnist dir or mnist is empyt dir
         download_MNIST = True
@@ -162,7 +179,7 @@ def get_FashionMNIST_data(root="./Fasion_mnist/",augmentation=None,download_MNIS
 
 
 def print_image_sample(train_dataset, index=0):
-    # plot one example of transformed, and one untransforeD
+    # plot one example of transformed, and one untransfored image. So have to use train_dataset with transform specified
     plt.imshow(train_dataset[index][0].numpy().reshape(28,28), cmap='gray')
     plt.title('%s' % labels_map[train_dataset.train_labels[index].item()])
     plt.show()
@@ -170,6 +187,7 @@ def print_image_sample(train_dataset, index=0):
     plt.imshow(train_dataset.train_data[index,:,:].numpy().reshape(28,28), cmap='gray')
     plt.title('%s' % labels_map[train_dataset.train_labels[index].item()])
     plt.show()
+
 
 def print_image_shape(train_dataset):
     print("Show train dataset size for data untransformed, data trasnformed, and label")
@@ -192,10 +210,11 @@ def get_samples(image_num, test_data):
         samples.append(sample)
     return samples
 
-def test_accuracy(test_data, model, test_num=5000):
+def test_accuracy(test_data, cnn, test_num=5000):
+    """test_accuray with the trained model. Input: test_data: dataset. cnn: CNN object (for this usage))"""
     test_x = torch.unsqueeze(test_data.test_data, dim=1).type(torch.FloatTensor)[:test_num] / 255.0
     test_y = test_data.test_labels[:test_num]
-    test_output, _ = model(test_x)
+    test_output, _ = cnn(test_x)
     pred_y = torch.max(test_output, 1)[1].data.numpy()
     accuracy = float(
         (pred_y == test_y.data.numpy()).astype(int).sum()
