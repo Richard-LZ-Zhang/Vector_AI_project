@@ -52,6 +52,9 @@ np_train_labels = train_data.train_labels.numpy().astype(np.uint8)
 np_test_data = test_data.test_data.numpy().astype(np.uint8)
 np_test_labels = test_data.test_labels.numpy().astype(np.uint8)
 
+print("print np data shape. train_data, train_label, test_data, test_label")
+print(np_train_data.shape, np_train_labels.shape, np_test_data.shape, np_test_labels.shape)
+
 np_train_dataset = Dataset_customize(
     np_train_data, np_train_labels, transform=augmentation, train=True
 )
@@ -61,7 +64,7 @@ np_test_dataset = Dataset_customize(
     np_test_data, np_test_labels, transform=augmentation, train=False
 )
 
-print_image_shape(train_data) # plot one example of transformed, and one untransfored
+print_image_shape(np_train_dataset) # plot one example of transformed, and one untransfored
 print_image_sample(
     np_train_dataset, index=10
 )  # note 
@@ -75,6 +78,6 @@ cnn = CNN(Image_Height, Image_Size, Dropout_Universal)
 train_loader = Data.DataLoader(dataset=np_train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 New_model = Model(train_loader, np_test_dataset, cnn, lr=LR, test_size=TEST_SIZE)
 
-CNN_trained = New_model.train(Epoch=1)
+CNN_trained = New_model.train(Epoch=EPOCH)
 
 print("Numpy test successful!")

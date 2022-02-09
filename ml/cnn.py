@@ -190,7 +190,7 @@ def print_image_sample(train_dataset, index=0):
 
 
 def print_image_shape(train_dataset):
-    print("Show train dataset size for data untransformed, data trasnformed, and label")
+    print("Show train dataset size for data untransformed, data labels, and the first data (image) after transformed")
     print(train_dataset.train_data.size())  # (60000, 28, 28)
     print(train_dataset.train_labels.size())  # (60000)
     print(train_dataset[0][0].size()) # (60000, 28, 28)
