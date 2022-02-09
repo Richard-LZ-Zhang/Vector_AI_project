@@ -1,14 +1,14 @@
 # Vector_AI_project
 
 
-I. What I did
+# I. What I did
 
 I built a CNN model (see ml/cnn.py) that trains on Fashion_MNIST dataset and reaches test accurary of 90.0%. This model and relevent dataset objects also supports numpy arra (dtype uint8) input (tested in test_cnn_np).
 
 I also built the server api (see dataset_api module) for cnn server, receiver, and sender, and for both Kafka and Gcloud. The configuration is stored in servoce_config dir. Google cloud could be directly run as I have had the keys attached.
 
 
-II. How to use?
+# II. How to use?
 
 Environment, google cloud has been constructed and a key is provided so access to required functions are avaiblae. Kafka mode needs initiating a Kafka service and creation of two topics. They are written and used in json config files. 
 
@@ -18,10 +18,10 @@ Run main.py file and there will be three threads for sender receiver and cnn ser
 
 Run train_store.py completes a full training on Fashion_MNIST data, and store the model parameters in a path.
 
-To Use your own data, see test_cnn_np.py which exports the raw data in Fashion_MNIST in form numpy uint8 array and feed into customized dataset, and feed back in to the model. The current code supports input in size 28 height 1 in numpy array uint8 form. The data should first be used into creating dataset_customize object. THen the usage will be the same as using torch dataset.
+To Use your own data, see test_cnn_np.py which exports the raw data in Fashion_MNIST in form numpy uint8 array and feed into customized dataset, and feed back in to the model. The current code supports input in size 28 height 1 in numpy array uint8 form. The data should first be used into creating dataset_customize object, in np array with shape (num_of_images, 28,28) for test data, and (num_of_images) for test label. Then the usage will be the same as using torch dataset.
 
 
-III Problem and Proposed Solutions:
+# III Problem and Proposed Solutions:
 
 1. No auto reconnect for gcloud and Kafka strategies
 2. For Gcloud, problematic if there a lot of unacknowledged data in the cloud and then a subscriber connects to it. Solution: a "max_messages" option for pull
