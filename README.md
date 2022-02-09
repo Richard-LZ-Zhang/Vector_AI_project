@@ -16,7 +16,9 @@ Apologies for not having and requirement.txt or python venv (hindsights shows it
 
 Run main.py file and there will be three threads for sender receiver and cnn server running. You may change the image_num (num of images sent) and MODE ("gcloud" / "kafka") variable to see what happens. The three "servers" could also be run seprately in receiver_start.py, sender_start.py, servert_start.py
 
-Run train_store completes a full training on Fasion_MNIST data, and store the model parameters in a path.
+Run train_store.py completes a full training on Fashion_MNIST data, and store the model parameters in a path.
+
+To Use your own data, see test_cnn_np.py which exports the raw data in Fashion_MNIST in form numpy uint8 array and feed into customized dataset, and feed back in to the model. The current code supports input in size 28 height 1 in numpy array uint8 form. The data should first be used into creating dataset_customize object. THen the usage will be the same as using torch dataset.
 
 
 III Problem and Proposed Solutions:
